@@ -86,6 +86,7 @@ DESTINATION_BORDER_Y = 50
 
 @dataclass
 class AppOptions:
+    """Command-line options and resolved output locations for one run."""
     input_path: str
     calibrated_output_folder: str
     json_output_folder: str
@@ -97,6 +98,7 @@ class AppOptions:
 
 @dataclass
 class CalibrationPointOutput:
+    """One detected calibration point with image and board coordinates."""
     index: int
     label: str
     confidence: float
@@ -108,6 +110,7 @@ class CalibrationPointOutput:
 
 @dataclass
 class CalibrationOutput:
+    """Result of board calibration, including metadata and detected points."""
     success: bool
     message: str
     orientation: str | None = None
@@ -122,11 +125,13 @@ class CalibrationOutput:
 
     @staticmethod
     def failed(message: str) -> "CalibrationOutput":
+        """Create a failed calibration result with the supplied message."""
         return CalibrationOutput(success=False, message=message)
 
 
 @dataclass
 class BoundingBoxOutput:
+    """Axis-aligned bounding box in image coordinates."""
     x: int
     y: int
     width: int
@@ -135,6 +140,7 @@ class BoundingBoxOutput:
 
 @dataclass
 class CoinDetectionResult:
+    """Detected coin metadata and derived size correction values."""
     detected: bool = False
     confidence: float = 0.0
     bounding_box: BoundingBoxOutput | None = None
@@ -146,6 +152,7 @@ class CoinDetectionResult:
 
 @dataclass
 class DetectedPointSimple:
+    """Simple detected point representation with confidence."""
     x: float
     y: float
     confidence: float
@@ -153,6 +160,7 @@ class DetectedPointSimple:
 
 @dataclass
 class LobsterMeasurementResult:
+    """Detected lobster landmarks and computed length measurements."""
     detected: bool = False
     carapace_length_mm: float | None = None
     total_length_mm: float | None = None
@@ -166,6 +174,7 @@ class LobsterMeasurementResult:
 
 @dataclass
 class ImageProcessingOutput:
+    """Top-level output document for one processed input image."""
     input_file: str
     calibrated_image_file: str | None = None
     calibration: CalibrationOutput | None = None
@@ -177,6 +186,7 @@ class ImageProcessingOutput:
 
 @dataclass
 class YoloItem:
+    """Single YOLO detection result in pixel coordinates."""
     type: str
     confidence: float
     x: int
@@ -187,6 +197,7 @@ class YoloItem:
 
 @dataclass
 class CalibrationClass:
+    """Board calibration class definition and matched detection data."""
     index: int
     label: str
     real_x: int
@@ -198,6 +209,7 @@ class CalibrationClass:
 
 @dataclass
 class RotatedImage:
+    """Temporary rotated copy of an input image and its rotation metadata."""
     filename: str
     board_points: list[CalibrationClass] = field(default_factory=list)
     model_points_after_step: list[CalibrationClass] = field(default_factory=list)
@@ -207,6 +219,7 @@ class RotatedImage:
 
 @dataclass
 class StepEvaluation:
+    """Calibration step score and associated temporary output image."""
     residuals: float
     temp_file_path: str
     step: int
@@ -215,6 +228,7 @@ class StepEvaluation:
 
 @dataclass
 class AlignedPoints:
+    """Aligned detection subset and its consistency metrics."""
     objects: list[YoloItem]
     std_dev: float
     std_dev_distances: float
@@ -222,6 +236,7 @@ class AlignedPoints:
 
 class YoloDetector:
     def __init__(self, cfg_path: str, weights_path: str, names_path: str, gpu_index: int) -> None:
+        """Load a YOLO network and select the available OpenCV backend."""
         self.net = cv2.dnn.readNetFromDarknet(cfg_path, weights_path)
         self.layer_names = self.net.getLayerNames()
         self.output_layers = [self.layer_names[i - 1] for i in self.net.getUnconnectedOutLayers().flatten()]
@@ -238,10 +253,12 @@ class YoloDetector:
 
     @staticmethod
     def _read_class_names(path: str) -> list[str]:
+        """Read non-empty class names from a Darknet names file."""
         with open(path, "r", encoding="utf-8") as file:
             return [line.strip() for line in file if line.strip()]
 
     def detect(self, image_path: str, confidence_threshold: float = 0.25, nms_threshold: float = 0.45) -> list[YoloItem]:
+        """Run YOLO detection on an image and return filtered bounding boxes."""
         image = cv2.imread(image_path)
         if image is None:
             return []
@@ -300,6 +317,7 @@ class YoloDetector:
 
 
 def main() -> int:
+    """Parse arguments, process input images, and write calibration outputs."""
     try:
         options = parse_args(sys.argv[1:])
         if options is None:
@@ -374,6 +392,7 @@ def main() -> int:
 
 
 def parse_args(args: list[str]) -> AppOptions | None:
+    """Parse command-line arguments into application options."""
     if len(args) < 3:
         return None
 
@@ -400,6 +419,7 @@ def parse_args(args: list[str]) -> AppOptions | None:
 
 
 def print_usage() -> None:
+    """Print the command-line usage summary."""
     print("Usage:")
     print(
         "  python measure_lobster.py <inputJpgOrFolder> <calibratedOutputFolder> <jsonOutputFolder> "
@@ -408,6 +428,7 @@ def print_usage() -> None:
 
 
 def get_input_files(input_path: str) -> list[str]:
+    """Return JPG and JPEG inputs from a file or directory path."""
     path = Path(input_path)
     if path.is_file():
         if path.suffix.lower() in (".jpg", ".jpeg"):
@@ -426,6 +447,7 @@ def get_input_files(input_path: str) -> list[str]:
 
 
 def build_model_configuration(models_root: str, cfg_name: str, weights_name: str, names_name: str) -> tuple[str, str, str]:
+    """Resolve the config, weights, and names paths for one model set."""
     return (
         resolve_model_path(models_root, cfg_name),
         resolve_model_path(models_root, weights_name),
@@ -434,6 +456,7 @@ def build_model_configuration(models_root: str, cfg_name: str, weights_name: str
 
 
 def resolve_model_path(models_root: str, file_name: str) -> str:
+    """Find a model file under the expected model subdirectories."""
     candidates = [
         Path(models_root) / file_name,
         Path(models_root) / "configs" / file_name,
@@ -456,6 +479,7 @@ def measure_lobster(
     coin_diameter_mm: float,
     coin: CoinDetectionResult,
 ) -> LobsterMeasurementResult:
+    """Detect lobster landmarks and compute carapace and total length."""
     _ = coin_diameter_mm
     result = LobsterMeasurementResult()
 
@@ -500,6 +524,7 @@ def detect_and_extract_coin(
     coin_output_folder: str | None,
     coin_diameter_mm: float,
 ) -> CoinDetectionResult:
+    """Detect the reference coin and optionally export a cropped coin image."""
     result = CoinDetectionResult()
 
     detections = sorted(coin_yolo.detect(board_file), key=lambda p: p.confidence, reverse=True)
@@ -534,13 +559,13 @@ def calibrate_board_image(
     input_file: str,
     calibrated_output_file: str,
 ) -> CalibrationOutput:
+    """Rectify a calibration board image using the best detected orientation."""
     rotated_images: list[RotatedImage] = []
     scores: list[StepEvaluation] = []
 
     try:
         rotated_images = generate_rotated_images(input_file)
 
-        # Match ReadMarketBoardInverts:
         # detect points on all four rotations, but do not run a calibration
         # step on every rotation before selecting the best one.
         for image in rotated_images:
@@ -553,10 +578,6 @@ def calibrate_board_image(
                 zoom_factor=1.0,
             )
 
-        # Match:
-        # OrderByDescending(rt => rt.ModelPoints.Count)
-        #     .ThenBy(rt => rt.Temporary)
-        #
         # The Python likelihood field preserves the preferred rotation order.
         best_image = sorted(
             rotated_images,
@@ -576,7 +597,6 @@ def calibrate_board_image(
 
         step = 1
 
-        # ReadMarketBoardInverts omits zoomFactor here, so it defaults to 1.
         model_points_after_step = process_step_board2(
             yolo_wrapper=yolo_wrapper,
             src_file_path=filename,
@@ -606,17 +626,6 @@ def calibrate_board_image(
                 zoom_factor=CALIBRATION_ZOOM_FACTOR,
             )
 
-            # Direct translation of the C# condition:
-            #
-            # while (
-            #     step < 3 ||
-            #     (
-            #         modelPointsAfterStep.Count >= 4 &&
-            #         scores.Last().Residuals + 1 <
-            #             previousScore.Residuals &&
-            #         step <= 5
-            #     )
-            # )
             while (
                 step < 3
                 or (
@@ -658,8 +667,6 @@ def calibrate_board_image(
                 f"Residual too high: {best_step.residuals:.2f}"
             )
 
-        # Match System.Drawing.Graphics.DrawImage source and destination
-        # rectangles. Both are 1590 x 480, so no resize is required.
         source_x = CALIBRATION_BORDER - 100
         source_y = CALIBRATION_BORDER - DESTINATION_BORDER_Y
         output_width=int(BOARD_WIDTH * EXPORT_SCALE),
@@ -738,6 +745,7 @@ def process_step_board2(
     step: int,
     zoom_factor: float = 1,
 ) -> list[CalibrationClass]:
+    """Run one calibration refinement step and record its evaluation score."""
     fd, dest_file_path = tempfile.mkstemp(suffix=".jpg")
     os.close(fd)
 
@@ -760,6 +768,7 @@ def save_unwarped_image(
     border: int,
     zoom_factor: float = 1,
 ) -> None:
+    """Warp an input image with the supplied calibration points and border."""
     warp_mat = get_warp_mat(model_points)
     input_mat = cv2.imread(src_file_path, cv2.IMREAD_COLOR)
     if input_mat is None:
@@ -776,6 +785,7 @@ def save_unwarped_image(
 
 
 def get_warp_mat(model_points: list[CalibrationClass]) -> np.ndarray:
+    """Compute the homography that maps detected board points to board space."""
     srcs = np.array([[p.image_x, p.image_y] for p in model_points], dtype=np.float32)
     dsts = np.array([[p.real_x, p.real_y] for p in model_points], dtype=np.float32)
 
@@ -792,6 +802,7 @@ def get_board2_points(
     clean: bool = True,
     zoom_factor: float = 1.0,
 ) -> list[CalibrationClass]:
+    """Match YOLO detections to calibration board classes and image coordinates."""
     objects = [
         item
         for item in items
@@ -874,8 +885,6 @@ def get_board2_points(
 
         calibration_class.confidence = main_object.confidence
 
-        # Match the second C# loop. Border is added after zooming and is
-        # deliberately not multiplied by zoom_factor.
         calibration_class.real_x += int(border * EXPORT_SCALE)
         calibration_class.real_y += int(border * EXPORT_SCALE)
 
@@ -897,6 +906,7 @@ def get_board2_points(
     return classes
 
 def safe_type_int(value: str) -> int | None:
+    """Extract the numeric class prefix from a YOLO label when possible."""
     token = value.split(" ")[0]
     try:
         return int(token)
@@ -905,6 +915,7 @@ def safe_type_int(value: str) -> int | None:
 
 
 def find_aligned(items: list[YoloItem]) -> AlignedPoints:
+    """Keep the most consistent set of detections along the board alignment."""
     if len(items) <= 2:
         return AlignedPoints(items, 0, 0)
 
@@ -945,6 +956,7 @@ def find_aligned(items: list[YoloItem]) -> AlignedPoints:
 
 
 def calc_distance(obj1: YoloItem, obj2: YoloItem) -> float:
+    """Measure normalized center-to-center distance between two detections."""
     idx1 = safe_type_int(obj1.type.split(" ")[0])
     idx2 = safe_type_int(obj2.type.split(" ")[0])
     if idx1 is None or idx2 is None:
@@ -964,6 +976,7 @@ def calc_distance(obj1: YoloItem, obj2: YoloItem) -> float:
 
 
 def std_dev(values: list[float]) -> float:
+    """Return the population standard deviation of finite values in a list."""
     if len(values) == 0:
         return 0
 
@@ -977,6 +990,7 @@ def std_dev(values: list[float]) -> float:
 
 
 def eval_detected_points(items: list[CalibrationClass]) -> float:
+    """Score calibration points by mean squared distance from target positions."""
     score = 0.0
     for pclass in items:
         score += (pclass.image_x - pclass.real_x) ** 2 + (pclass.image_y - pclass.real_y) ** 2
@@ -985,6 +999,7 @@ def eval_detected_points(items: list[CalibrationClass]) -> float:
 
 
 def generate_rotated_images(filename: str) -> list[RotatedImage]:
+    """Create temporary copies of an image in the four supported orientations."""
     rotated_images = [RotatedImage(filename=create_temp_jpg()) for _ in range(4)]
 
     with Image.open(filename) as img:
@@ -1014,6 +1029,7 @@ def generate_rotated_images(filename: str) -> list[RotatedImage]:
 
 
 def extract_coin(src_file: str, dst_file: str, bbox: YoloItem, resolution: float) -> None:
+    """Crop, resize, and annotate the detected coin for export."""
     _ = resolution
 
     with Image.open(src_file) as img:
@@ -1053,12 +1069,14 @@ def extract_coin(src_file: str, dst_file: str, bbox: YoloItem, resolution: float
 
 
 def write_output_json(output_folder: str, input_file: str, output: ImageProcessingOutput) -> None:
+    """Write the processing result JSON using PascalCase field names."""
     json_file = Path(output_folder) / (Path(input_file).stem + ".json")
     payload = to_pascal_dict(output)
     json_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def to_pascal_dict(obj: Any) -> Any:
+    """Convert dataclasses, mappings, and lists into PascalCase dictionaries."""
     if obj is None:
         return None
 
@@ -1079,10 +1097,12 @@ def to_pascal_dict(obj: Any) -> Any:
 
 
 def to_pascal_case(snake_name: str) -> str:
+    """Convert snake_case text to PascalCase."""
     return "".join(part[:1].upper() + part[1:] for part in snake_name.split("_"))
 
 
 def create_temp_jpg() -> str:
+    """Create and return a temporary JPG file path."""
     fd, path = tempfile.mkstemp(suffix=".jpg")
     os.close(fd)
     return path
@@ -1093,6 +1113,7 @@ def draw_measurements_on_image(
     lobster: LobsterMeasurementResult,
     coin: CoinDetectionResult,
 ) -> None:
+    """Overlay coin, lobster, and measurement annotations on an image."""
 
     image = cv2.imread(calibrated_image_file)
 
@@ -1254,6 +1275,7 @@ def draw_measurements_on_image(
 
 
 def try_delete_file(path: str | None) -> None:
+    """Delete a temporary file if it exists, ignoring missing-file cases."""
     if not path:
         return
 
