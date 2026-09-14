@@ -1,0 +1,115 @@
+{
+  "InputFile": "images\\lobster2.jpg",
+  "CalibratedImageFile": "calibrated\\lobster2.jpg",
+  "Calibration": {
+    "Success": true,
+    "Message": "Calibration succeeded",
+    "Orientation": "Straight",
+    "Step": 2,
+    "Residual": 9.625,
+    "ZoomFactor": 1.0,
+    "CalibrationBorder": 200,
+    "DestinationBorderY": 50,
+    "OutputWidth": [
+      3180
+    ],
+    "OutputHeight": [
+      960
+    ],
+    "DetectedPoints": [
+      {
+        "Index": 1,
+        "Label": "T20",
+        "Confidence": 0.997605562210083,
+        "ImageX": 1198.5,
+        "ImageY": 399,
+        "RealX": 1200,
+        "RealY": 400
+      },
+      {
+        "Index": 2,
+        "Label": "T30",
+        "Confidence": 0.9975488781929016,
+        "ImageX": 1599.0,
+        "ImageY": 400,
+        "RealX": 1600,
+        "RealY": 400
+      },
+      {
+        "Index": 3,
+        "Label": "T40",
+        "Confidence": 0.9978596568107605,
+        "ImageX": 1999.5,
+        "ImageY": 401,
+        "RealX": 2000,
+        "RealY": 400
+      },
+      {
+        "Index": 9,
+        "Label": "B30",
+        "Confidence": 0.9961812496185303,
+        "ImageX": 1599.0,
+        "ImageY": 1156,
+        "RealX": 1600,
+        "RealY": 1158
+      },
+      {
+        "Index": 10,
+        "Label": "B40",
+        "Confidence": 0.9733952283859253,
+        "ImageX": 2002.0,
+        "ImageY": 1159,
+        "RealX": 2000,
+        "RealY": 1158
+      },
+      {
+        "Index": 12,
+        "Label": "B60",
+        "Confidence": 0.6221272349357605,
+        "ImageX": 2806.5,
+        "ImageY": 1158,
+        "RealX": 2800,
+        "RealY": 1158
+      }
+    ]
+  },
+  "Coin": {
+    "Detected": true,
+    "Confidence": 0.9752118587493896,
+    "BoundingBox": {
+      "X": 1283,
+      "Y": 406,
+      "Width": 117,
+      "Height": 116
+    },
+    "CoinBoundingBoxWidthMm": 29.25,
+    "CoinBoundingBoxHeightMm": 29.0,
+    "CoinBasedSizeCorrection": 0.8273504273504273,
+    "ExtractedCoinFile": "coins\\lobster2.jpg"
+  },
+  "Lobster": {
+    "Detected": true,
+    "CarapaceLengthMm": 72.0,
+    "TotalLengthMm": 182.0,
+    "CoinBasedCarapaceLengthMm": 59.6,
+    "CoinBasedTotalLengthMm": 150.6,
+    "CoinCorrectionFactor": 0.8273504273504273,
+    "P0": {
+      "X": 1201.0,
+      "Y": 457.0,
+      "Confidence": 0.9959501028060913
+    },
+    "P1": {
+      "X": 1489.5,
+      "Y": 458.0,
+      "Confidence": 0.9944615960121155
+    },
+    "P2": {
+      "X": 1928.0,
+      "Y": 488.5,
+      "Confidence": 0.9940630197525024
+    }
+  },
+  "Warnings": [],
+  "Error": null
+}

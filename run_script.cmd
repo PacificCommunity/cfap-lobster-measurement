@@ -1,0 +1,1 @@
+python measure_lobster.py ./images ./calibrated ./json --models ./models --coinDiameter 24.2 --gpu 0 --coinOutputFolder ./coins
