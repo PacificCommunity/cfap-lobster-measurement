@@ -20,6 +20,12 @@ The script processes photographs of lobsters positioned on a calibrated measurem
 
 The system uses a custom ruler board containing 14 calibration markers.
 
+
+![Measuring board](measuring_board.png "Measuring board")
+
+![Measuring board with markers](measuring_board_markers.png "Measuring board with markers")
+
+
 | Marker | Position |
 |---|---|
 | T10-T70 | Top row |
